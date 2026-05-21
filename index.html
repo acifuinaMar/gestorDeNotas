@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Notas - Con Google Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .titulo {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 2.8rem;
+            color: #667eea;
+            text-shadow: 2px 2px 0 #764ba2, 4px 4px 0 rgba(0,0,0,0.1);
+            letter-spacing: 2px;
+        }
+        
+        .subtitulo {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .auth-box {
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .auth-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .btn-google {
+            background: #db4437;
+            margin-top: 10px;
+        }
+        
+        .btn-google:hover {
+            background: #c33d2e;
+        }
+        
+        .separador {
+            text-align: center;
+            margin: 15px 0;
+            color: #999;
+            position: relative;
+        }
+        
+        .separador::before,
+        .separador::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #ddd;
+        }
+        
+        .separador::before {
+            left: 0;
+        }
+        
+        .separador::after {
+            right: 0;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-secundario {
+            background: #6c757d;
+        }
+        
+        .info-usuario {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .user-data {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+        
+        /* Estilos para las notas */
+        .formulario {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .nota {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            transition: all 0.3s;
+        }
+        
+        .nota:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .nota h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .eliminar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .vacio, .cargando {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-style: italic;
+        }
+        
+        .oculto {
+            display: none;
+        }
+        
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .email {
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="titulo">Gestor de Notas</h1>
+        <div class="subtitulo">Maryori Acifuina | 23 6640</div>
+        
+        <!-- Pantalla de Login/Registro -->
+        <div id="authPanel">
+            <div class="auth-box">
+                <h3>Iniciar Sesión</h3>
+                
+                <!-- Botón de Google -->
+                <button onclick="iniciarConGoogle()" class="btn-google">
+                    Iniciar sesión con Google
+                </button>
+                
+                <div class="separador">o con email</div>
+                
+                <!-- Formulario email/contraseña -->
+                <input type="email" id="email" placeholder="Correo electrónico">
+                <input type="password" id="password" placeholder="Contraseña (mínimo 6 caracteres)">
+                <div class="auth-buttons">
+                    <button onclick="iniciarSesion()">Iniciar Sesión</button>
+                    <button onclick="registrarse()" class="btn-secundario">Registrarse</button>
+                </div>
+                <div id="authError" class="error"></div>
+            </div>
+        </div>
+        
+        <!-- Panel de Notas -->
+        <div id="notasPanel" class="oculto">
+            <div class="info-usuario">
+                <div class="user-data">
+                    <img id="userAvatar" class="user-avatar" src="" alt="Avatar">
+                    <span><span id="userEmail" class="email"></span></span>
+                </div>
+                <button onclick="cerrarSesion()" class="btn-secundario">Cerrar Sesión</button>
+            </div>
+            
+            <div class="formulario">
+                <h3>Nueva Nota</h3>
+                <input type="text" id="titulo" placeholder="Título de la nota" maxlength="100">
+                <textarea id="contenido" placeholder="Escribe tu nota aquí..."></textarea>
+                <button onclick="agregarNota()">Guardar Nota</button>
+            </div>
+            
+            <h3>Mis Notas</h3>
+            <div id="lista-notas">
+                <div class="cargando">Cargando tus notas...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEkC2q_9aBQ1dMd9yIYrXTWmKm_HjlTOI",
+            authDomain: "gestordenotasmar.firebaseapp.com",
+            projectId: "gestordenotasmar",
+            storageBucket: "gestordenotasmar.firebasestorage.app",
+            messagingSenderId: "265123012350",
+            appId: "1:265123012350:web:a2a1aefa346db10ed64faf"
+        };
+        
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        
+        // Proveedor de Google
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+        
+        let usuarioActual = null;
+        
+        // ============ FUNCIONES DE AUTENTICACIÓN ============
+        
+        async function iniciarConGoogle() {
+            try {
+                await auth.signInWithPopup(googleProvider);
+            } catch (error) {
+                document.getElementById('authError').innerText = 'Error con Google: ' + error.message;
+                console.error(error);
+            }
+        }
+        
+        async function registrarse() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('authError');
+            
+            if (!email || !password) {
+                errorDiv.innerText = 'Completa email y contraseña';
+                return;
+            }
+            
+            if (password.length < 6) {
+                errorDiv.innerText = 'La contraseña debe tener al menos 6 caracteres';
+                return;
+            }
+            
+            try {
+                errorDiv.innerText = '';
+                await auth.createUserWithEmailAndPassword(email, password);
+            } catch (error) {
+                errorDiv.innerText = 'Error: ' + error.message;
+                console.error(error);
+            }
+        }
+        
+        async function iniciarSesion() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('authError');
+            
+            if (!email || !password) {
+                errorDiv.innerText = 'Completa email y contraseña';
+                return;
+            }
+            
+            try {
+                errorDiv.innerText = '';
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                errorDiv.innerText = 'Error: ' + error.message;
+                console.error(error);
+            }
+        }
+        
+        async function cerrarSesion() {
+            try {
+                await auth.signOut();
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+            }
+        }
+        
+        // ============ FUNCIONES DE NOTAS ============
+        
+        async function agregarNota() {
+            const titulo = document.getElementById('titulo').value.trim();
+            const contenido = document.getElementById('contenido').value.trim();
+            
+            if (!titulo || !contenido) {
+                alert('Por favor, escribe título y contenido');
+                return;
+            }
+            
+            try {
+                await db.collection('notas').add({
+                    titulo: titulo,
+                    contenido: contenido,
+                    userId: usuarioActual.uid,
+                    fecha: new Date(),
+                    fechaTexto: new Date().toLocaleString('es-ES')
+                });
+                
+                document.getElementById('titulo').value = '';
+                document.getElementById('contenido').value = '';
+                cargarNotas();
+                alert('Nota guardada en la nube');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al guardar: ' + error.message);
+            }
+        }
+        
+        async function cargarNotas() {
+            if (!usuarioActual) return;
+            
+            const listaDiv = document.getElementById('lista-notas');
+            listaDiv.innerHTML = '<div class="cargando">Cargando tus notas...</div>';
+            
+            try {
+                const snapshot = await db.collection('notas')
+                    .where('userId', '==', usuarioActual.uid)
+                    .orderBy('fecha', 'desc')
+                    .get();
+                
+                if (snapshot.empty) {
+                    listaDiv.innerHTML = '<div class="vacio">No hay notas aún. ¡Crea la primera!</div>';
+                    return;
+                }
+                
+                listaDiv.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const nota = doc.data();
+                    const fechaMostrar = nota.fechaTexto || 'Sin fecha';
+                    
+                    const notaDiv = document.createElement('div');
+                    notaDiv.className = 'nota';
+                    notaDiv.innerHTML = `
+                        <h3>${escapeHTML(nota.titulo)}</h3>
+                        <p>${escapeHTML(nota.contenido)}</p>
+                        <div class="fecha">${fechaMostrar}</div>
+                        <button class="eliminar" onclick="eliminarNota('${doc.id}')">Eliminar</button>
+                    `;
+                    listaDiv.appendChild(notaDiv);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                listaDiv.innerHTML = `<div class="vacio">Error al cargar: ${error.message}</div>`;
+            }
+        }
+        
+        async function eliminarNota(id) {
+            if (confirm('¿Eliminar esta nota permanentemente?')) {
+                try {
+                    await db.collection('notas').doc(id).delete();
+                    cargarNotas();
+                    alert('Nota eliminada');
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al eliminar: ' + error.message);
+                }
+            }
+        }
+        
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+        
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // Usuario conectado
+                usuarioActual = user;
+                document.getElementById('authPanel').classList.add('oculto');
+                document.getElementById('notasPanel').classList.remove('oculto');
+                document.getElementById('userEmail').innerText = user.email;
+                
+                // Mostrar foto de perfil si viene de Google
+                if (user.photoURL) {
+                    document.getElementById('userAvatar').src = user.photoURL;
+                } else {
+                    document.getElementById('userAvatar').src = '';
+                }
+                
+                cargarNotas();
+            } else {
+                // Usuario desconectado
+                usuarioActual = null;
+                document.getElementById('authPanel').classList.remove('oculto');
+                document.getElementById('notasPanel').classList.add('oculto');
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('authError').innerText = '';
+                document.getElementById('userAvatar').src = '';
+            }
+        });
+    </script>
+</body>
+</html>
